@@ -5,4 +5,13 @@ const axiosInstance = axios.create({
     withCredentials: true,
 });
 
+// Har request mein token automatically attach hoga
+axiosInstance.interceptors.request.use((config) => {
+    const token = localStorage.getItem("accessToken"); 
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 export default axiosInstance;

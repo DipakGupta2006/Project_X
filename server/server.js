@@ -7,7 +7,7 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 
 const authRoutes = require("./routes/authRoutes");
-// const vaultRoutes = require("./routes/vaultRoutes");
+const vaultRoutes = require("./routes/vaultRoutes");
 
 app.use(morgan("dev"));
 app.use(express.json());
@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/", authRoutes);
-// app.use("/vault", vaultRoutes);
+app.use("/vault", vaultRoutes);
 
 app.listen(port, () => {
     console.log(`server running at port ${port}`);

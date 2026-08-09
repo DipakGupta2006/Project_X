@@ -26,6 +26,7 @@ const Create = () => {
   const [tags, setTags] = useState([]); // FIX 1: array, not string
   const [notes, setNotes] = useState('');
   const [favorite, setFavorite] = useState(false);
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -82,10 +83,13 @@ const Create = () => {
 
     setLoading(true); // FIX 5: setLoading(true) before try
     try {
-      const res = await axiosInstance.post('/vault/add', data);
+      const res = await axiosInstance.post('/vault/add-password', data);
+      console.log(res.data);
       if (res.data.success) {
         setSuccess('Password saved to vault!');
-        handleReset();
+        setTimeout(() => {   // yahan
+          handleReset();
+        }, 2000);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong.');
