@@ -10,12 +10,14 @@ const {
     getProfile, updateProfile,
 } = require("../controllers/vaultController");
 
-const { getVaultQuestions, sendVaultOtp, verifyVaultGate } = require("../controllers/vaultGateController");
+const { getVaultQuestions, sendVaultOtp, verifyVaultOtp, verifyVaultQuestions, verifyVaultMaster } = require("../controllers/vaultGateController");
 
 // Vault Gate routes (no vaultSession needed)
 router.get("/gate/questions", verifyToken, getVaultQuestions);
 router.post("/gate/send-otp", verifyToken, sendVaultOtp);
-router.post("/gate/verify", verifyToken, verifyVaultGate);
+router.post("/gate/verify-otp", verifyToken, verifyVaultOtp);
+router.post("/gate/verify-questions", verifyToken, verifyVaultQuestions);
+router.post("/gate/verify-master", verifyToken, verifyVaultMaster);
 
 // No vault session needed
 router.get("/home", verifyToken, home);
