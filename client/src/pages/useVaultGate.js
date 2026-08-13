@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 
 const BASE_URL = "http://localhost:3000/vault/gate";
 
@@ -34,8 +35,8 @@ export const useVaultGate = () => {
         setError("");
         try {
             const [qRes] = await Promise.all([
-                axios.get(`${BASE_URL}/questions`, { headers: headers() }),
-                axios.post(`${BASE_URL}/send-otp`, {}, { headers: headers() }),
+                axiosInstance.get(`${BASE_URL}/questions`, { headers: headers() }),
+                axiosInstance.post(`${BASE_URL}/send-otp`, {}, { headers: headers() }),
             ]);
             setQuestions(qRes.data.questions);
         } catch (err) { handleError(err); }
@@ -46,7 +47,7 @@ export const useVaultGate = () => {
     const submitOtp = useCallback(async () => {
         setLoading(true); setError(""); setSuccessMsg("");
         try {
-            const res = await axios.post(`${BASE_URL}/verify-otp`, { otp }, { headers: headers() });
+            const res = await axiosInstance.post(`${BASE_URL}/verify-otp`, { otp }, { headers: headers() });
             setSuccessMsg(res.data.message);
             setTimeout(() => { setSuccessMsg(""); setStep(2); }, 1000);
         } catch (err) { handleError(err); }
@@ -58,8 +59,9 @@ export const useVaultGate = () => {
         setLoading(true); setError(""); setSuccessMsg("");
         try {
             const answersArray = questions.map((q) => ({ id: q.id, answer: answers[q.id] || "" }));
-            const res = await axios.post(`${BASE_URL}/verify-questions`, { answers: answersArray }, { headers: headers() });
+            const res = await axiosInstance.post(`${BASE_URL}/verify-questions`, { answers: answersArray }, { headers: headers() });
             setSuccessMsg(res.data.message);
+            
             setTimeout(() => { setSuccessMsg(""); setStep(3); }, 1000);
         } catch (err) { handleError(err); }
         finally { setLoading(false); }
@@ -69,7 +71,7 @@ export const useVaultGate = () => {
     const submitMaster = useCallback(async () => {
         setLoading(true); setError(""); setSuccessMsg("");
         try {
-            const res = await axios.post(`${BASE_URL}/verify-master`, { masterPassword }, { headers: headers() });
+            const res = await axiosInstance.post(`${BASE_URL}/verify-master`, { masterPassword }, { headers: headers() });
             setSuccessMsg("Vault unlocked! Loading your vault...");
             setTimeout(() => { setVaultToken(res.data.vaultSessionToken); setIsVerified(true); }, 1200);
         } catch (err) { handleError(err); }

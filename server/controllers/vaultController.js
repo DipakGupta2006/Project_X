@@ -82,7 +82,49 @@ const addPassword = async (req, res) => {
 };
 
 
-const viewPassword = async (req, res) => { };
+const viewPassword = async (req, res) => {
+    const userId = req.user.id;
+    const { category } = req.query;
+    
+    console.log("Category received:", category); // ← ye add karo
+
+    try {
+        let query = `SELECT id, app_name, username, encrypted_password, iv, category, tags, notes, is_favorite, created_at 
+                     FROM vault_passwords WHERE user_id = ?`;
+        const params = [userId];
+
+        // ← Yahi fix hai — sirf tab filter karo jab category ho aur 'All' na ho
+        if (category && category !== 'All') {
+            query += ` AND category = ?`;
+            params.push(category);
+        }
+
+        const [rows] = await pool.query(query, params);
+
+        // ← Empty result handle karo
+        if (rows.length === 0) {
+            return res.status(200).json({ 
+                success: true, 
+                data: [],
+                message: `No passwords found for "${category}".`
+            });
+        }
+
+        const decryptedRows = rows.map(row => ({
+            ...row,
+            decrypted_password: decrypt(row.encrypted_password, row.iv),
+            tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags
+        }));
+
+        return res.status(200).json({ success: true, data: decryptedRows });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
+
 const updatePassword = async (req, res) => { };
 const deletePassword = async (req, res) => { };
 const recycleBinPassword = async (req, res) => { };
