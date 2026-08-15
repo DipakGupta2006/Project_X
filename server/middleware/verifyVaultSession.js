@@ -36,7 +36,8 @@ const verifyVaultSession = async (req, res, next) => {
         }
 
         // last_active update
-        await pool.query("DELETE FROM vault_sessions WHERE session_token = ?", [vaultToken]);
+        // await pool.query("DELETE FROM vault_sessions WHERE session_token = ?", [vaultToken]);
+        await pool.query("UPDATE vault_sessions SET last_active = NOW() WHERE session_token = ?", [vaultToken]);
 
         req.vaultSession = session; // age use kar sako agar zarurat pade
         next();

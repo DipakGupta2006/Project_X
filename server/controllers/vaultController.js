@@ -90,7 +90,7 @@ const viewPassword = async (req, res) => {
 
     try {
         let query = `SELECT id, app_name, username, encrypted_password, iv, category, tags, notes, is_favorite, created_at 
-                     FROM vault_passwords WHERE user_id = ?`;
+             FROM vault_passwords WHERE user_id = ? AND is_deleted = 0`;
         const params = [userId];
 
         // ← Yahi fix hai — sirf tab filter karo jab category ho aur 'All' na ho
@@ -126,7 +126,30 @@ const viewPassword = async (req, res) => {
 
 
 const updatePassword = async (req, res) => { };
-const deletePassword = async (req, res) => { };
+
+const deletePassword = async (req, res) => {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    try {
+        const [result] = await pool.query(
+            `UPDATE vault_passwords 
+             SET is_deleted = 1, deleted_at = NOW() 
+             WHERE id = ? AND user_id = ?`,
+            [id, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "Password not found." });
+        }
+
+        return res.status(200).json({ success: true, message: "Password deleted successfully." });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
 const recycleBinPassword = async (req, res) => { };
 const getRecycleBinPassword = async (req, res) => { };
 const getCategoriesPassword = async (req, res) => { };

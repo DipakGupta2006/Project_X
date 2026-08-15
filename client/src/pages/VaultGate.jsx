@@ -9,7 +9,7 @@ const VaultGate = ({ onVerified }) => {
         loading, error, successMsg,
         attemptsLeft, isLocked, lockMessage,
         initGate, submitOtp, submitQuestions, submitMaster,
-        isVerified, vaultToken,
+        isVerified, vaultToken, sendOtp, otpSent,
     } = useVaultGate();
 
     useEffect(() => { initGate(); }, []);
@@ -62,7 +62,7 @@ const VaultGate = ({ onVerified }) => {
                 {/* Step 1 — OTP */}
                 {step === 1 && (
                     <div>
-                        <p className="text-sm text-gray-600 mb-3">OTP sent to your registered email.</p>
+                        <p className="text-sm text-gray-600 mb-3">Enter the OTP sent to your email.</p>
                         <input
                             type="text" maxLength={6} placeholder="Enter 6-digit OTP"
                             value={otp} onChange={(e) => setOtp(e.target.value)}
@@ -72,9 +72,13 @@ const VaultGate = ({ onVerified }) => {
                             className="w-full mt-4 bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
                             {loading ? "Verifying..." : "Verify OTP"}
                         </button>
+                        <button onClick={sendOtp} disabled={loading}
+                            className="w-full mt-2 text-sm text-blue-600 hover:underline disabled:opacity-50 bg-transparent border-none cursor-pointer">
+                            Resend OTP
+                        </button>
                     </div>
                 )}
-
+                
                 {/* Step 2 — Security Questions */}
                 {step === 2 && (
                     <div>
