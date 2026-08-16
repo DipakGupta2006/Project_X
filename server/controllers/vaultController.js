@@ -85,7 +85,7 @@ const addPassword = async (req, res) => {
 const viewPassword = async (req, res) => {
     const userId = req.user.id;
     const { category } = req.query;
-    
+
     console.log("Category received:", category); // ← ye add karo
 
     try {
@@ -103,8 +103,8 @@ const viewPassword = async (req, res) => {
 
         // ← Empty result handle karo
         if (rows.length === 0) {
-            return res.status(200).json({ 
-                success: true, 
+            return res.status(200).json({
+                success: true,
                 data: [],
                 message: `No passwords found for "${category}".`
             });
@@ -197,7 +197,37 @@ const recycleBinPassword = async (req, res) => {
     }
 };
 
-const getCategoriesPassword = async (req, res) => { };
+const getCategoriesPassword = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const [rows] = await pool.query(
+            `SELECT id, app_name, username, encrypted_password, iv, category, tags, is_favorite, created_at
+            FROM vault_passwords 
+            WHERE user_id = ? AND is_deleted = 0
+            ORDER BY category ASC`,
+            [userId]
+        );
+
+        const data = rows.map(row => ({
+            ...row,
+            decrypted_password: decrypt(row.encrypted_password, row.iv),
+            tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags,
+        }));
+
+        // Category wise group karo
+        const grouped = {};
+        data.forEach(p => {
+            if (!grouped[p.category]) grouped[p.category] = [];
+            grouped[p.category].push(p);
+        });
+
+        return res.status(200).json({ success: true, data: grouped });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
 const getFavoritePassword = async (req, res) => { };
 const generatePassword = async (req, res) => { };
 const analyzePasswords = async (req, res) => { };
