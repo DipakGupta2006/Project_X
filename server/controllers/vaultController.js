@@ -125,7 +125,37 @@ const viewPassword = async (req, res) => {
 };
 
 
-const updatePassword = async (req, res) => { };
+const updatePassword = async (req, res) => {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { app_name, username, password, category, tags, notes, is_favorite } = req.body;
+
+    try {
+        let updateFields = `app_name = ?, username = ?, category = ?, tags = ?, notes = ?, is_favorite = ?, updated_at = NOW()`;
+        let params = [app_name, username, category, JSON.stringify(tags), notes, is_favorite];
+
+        if (password) {
+            const { iv, encrypted_password } = encrypt(password);
+            updateFields += `, encrypted_password = ?, iv = ?`;
+            params.push(encrypted_password, iv);
+        }
+
+        params.push(id, userId);
+
+        const [result] = await pool.query(
+            `UPDATE vault_passwords SET ${updateFields} WHERE id = ? AND user_id = ? AND is_deleted = 0`,
+            params
+        );
+
+        if (result.affectedRows === 0)
+            return res.status(404).json({ success: false, message: "Password not found." });
+
+        return res.status(200).json({ success: true, message: "Password updated successfully." });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
 
 const deletePassword = async (req, res) => {
     const userId = req.user.id;
