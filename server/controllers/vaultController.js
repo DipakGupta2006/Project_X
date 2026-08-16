@@ -150,8 +150,53 @@ const deletePassword = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error." });
     }
 };
-const recycleBinPassword = async (req, res) => { };
-const getRecycleBinPassword = async (req, res) => { };
+
+const getRecycleBinPassword = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const [rows] = await pool.query(
+            `SELECT id, app_name, username, category, tags, is_favorite, created_at, deleted_at
+             FROM vault_passwords 
+             WHERE user_id = ? AND is_deleted = 1
+             ORDER BY deleted_at DESC`,
+            [userId]
+        );
+
+        const data = rows.map(row => ({
+            ...row,
+            tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags,
+            days_left: Math.max(0, 30 - Math.floor((new Date() - new Date(row.deleted_at)) / (1000 * 60 * 60 * 24)))
+        }));
+
+        return res.status(200).json({ success: true, data });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
+const recycleBinPassword = async (req, res) => {
+    const userId = req.user.id;
+    const { id } = req.params;
+    try {
+        const [result] = await pool.query(
+            `UPDATE vault_passwords 
+             SET is_deleted = 0, deleted_at = NULL 
+             WHERE id = ? AND user_id = ?`,
+            [id, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "Password not found." });
+        }
+
+        return res.status(200).json({ success: true, message: "Password restored successfully." });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
 const getCategoriesPassword = async (req, res) => { };
 const getFavoritePassword = async (req, res) => { };
 const generatePassword = async (req, res) => { };
