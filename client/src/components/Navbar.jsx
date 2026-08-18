@@ -11,10 +11,10 @@ const Navbar = () => {
                 &nbsp;&nbsp;&nbsp;Create
             </Link>
             <Link to="/vault" >
-                &nbsp;&nbsp;&nbsp;view
+                &nbsp;&nbsp;&nbsp;vault
             </Link>
             <Link to="/trash" >
-                &nbsp;&nbsp;&nbsp;deleted
+                &nbsp;&nbsp;&nbsp;trash
             </Link>
             <Link to="/restore" >
                 &nbsp;&nbsp;&nbsp;restore

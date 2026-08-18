@@ -258,8 +258,68 @@ const getCategoriesPassword = async (req, res) => {
     }
 };
 
-const getFavoritePassword = async (req, res) => { };
-const generatePassword = async (req, res) => { };
+const getFavoritePassword = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const [rows] = await pool.query(
+            `SELECT id, app_name, username, encrypted_password, iv, category, tags, is_favorite, created_at
+            FROM vault_passwords 
+            WHERE user_id = ? AND is_deleted = 0 AND is_favorite = 1
+            ORDER BY category ASC`,
+            [userId]
+        );
+
+        const data = rows.map(row => ({
+            ...row,
+            decrypted_password: decrypt(row.encrypted_password, row.iv),
+            tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags,
+        }));
+
+        // Category wise group karo
+        const grouped = {};
+        data.forEach(p => {
+            if (!grouped[p.category]) grouped[p.category] = [];
+            grouped[p.category].push(p);
+        });
+
+        return res.status(200).json({ success: true, data: grouped });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
+
+const generatePassword = async (req, res) => {
+    const userId = req.user.id;
+    const { password } = req.body;
+
+    if (!password) return res.status(400).json({ success: false, message: "Password required." });
+
+    try {
+        // Sirf last 15 rakhne ke liye purane delete karo
+        const [rows] = await pool.query(
+            `SELECT id FROM password_history WHERE user_id = ? ORDER BY created_at DESC`,
+            [userId]
+        );
+
+        if (rows.length >= 15) {
+            const deleteIds = rows.slice(14).map(r => r.id);
+            await pool.query(`DELETE FROM password_history WHERE id IN (?)`, [deleteIds]);
+        }
+
+        await pool.query(
+            `INSERT INTO password_history (user_id, password) VALUES (?, ?)`,
+            [userId, password]
+        );
+
+        return res.status(200).json({ success: true, message: "Saved to history." });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
 const analyzePasswords = async (req, res) => { };
 const getProfile = async (req, res) => { };
 const updateProfile = async (req, res) => { };
