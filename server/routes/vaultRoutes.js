@@ -7,7 +7,7 @@ const {
     home, addPassword, viewPassword, updatePassword, deletePassword,
     recycleBinPassword, getRecycleBinPassword, getCategoriesPassword,
     getFavoritePassword, generatePassword, analyzePasswords,
-    getProfile, updateProfile,
+    getProfile, updateProfile, getPasswordHistory, 
 } = require("../controllers/vaultController");
 
 const { getVaultQuestions, sendVaultOtp, verifyVaultOtp, verifyVaultQuestions, verifyVaultMaster } = require("../controllers/vaultGateController");
@@ -23,6 +23,8 @@ router.post("/gate/verify-master", verifyToken, verifyVaultMaster);
 router.get("/home", verifyToken, home);
 router.post("/add-password", verifyToken, addPassword);
 router.get("/generate-password", verifyToken, generatePassword);
+router.post("/generate-password", verifyToken, generatePassword);
+router.get("/password-history", verifyToken, getPasswordHistory);
 
 // Vault session required
 router.get("/view-password", verifyToken, verifyVaultSession, viewPassword);

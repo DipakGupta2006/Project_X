@@ -320,6 +320,21 @@ const generatePassword = async (req, res) => {
     }
 };
 
+const getPasswordHistory = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const [rows] = await pool.query(
+            `SELECT id, password, created_at FROM password_history 
+             WHERE user_id = ? ORDER BY created_at DESC LIMIT 15`,
+            [userId]
+        );
+        return res.status(200).json({ success: true, data: rows });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
 const analyzePasswords = async (req, res) => { };
 const getProfile = async (req, res) => { };
 const updateProfile = async (req, res) => { };
@@ -338,4 +353,6 @@ module.exports = {
     analyzePasswords,
     getProfile,
     updateProfile,
+    getPasswordHistory,
+    
 };
