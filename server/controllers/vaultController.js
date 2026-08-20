@@ -335,7 +335,64 @@ const getPasswordHistory = async (req, res) => {
     }
 };
 
-const analyzePasswords = async (req, res) => { };
+const analyzePasswords = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const [rows] = await pool.query(
+            `SELECT id, app_name, encrypted_password, iv, category, is_favorite
+             FROM vault_passwords 
+             WHERE user_id = ? AND is_deleted = 0`,
+            [userId]
+        );
+
+        const analyzed = rows.map(row => {
+            const pwd = decrypt(row.encrypted_password, row.iv);
+            let score = 0;
+            if (pwd.length >= 8) score++;
+            if (pwd.length >= 12) score++;
+            if (pwd.length >= 16) score++;
+            if (/[A-Z]/.test(pwd)) score++;
+            if (/[a-z]/.test(pwd)) score++;
+            if (/[0-9]/.test(pwd)) score++;
+            if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+            if (pwd.length >= 20) score++;
+
+            const percent = Math.round((score / 8) * 100);
+            const label = score <= 2 ? 'Weak' : score <= 4 ? 'Medium' : score <= 6 ? 'Strong' : 'Very Strong';
+
+            return {
+                id: row.id,
+                app_name: row.app_name,
+                category: row.category,
+                is_favorite: row.is_favorite,
+                score: percent,
+                label,
+                length: pwd.length,
+                has_upper: /[A-Z]/.test(pwd),
+                has_lower: /[a-z]/.test(pwd),
+                has_number: /[0-9]/.test(pwd),
+                has_special: /[^a-zA-Z0-9]/.test(pwd),
+            };
+        });
+
+        // Summary stats
+        const total = analyzed.length;
+        const weak = analyzed.filter(p => p.label === 'Weak').length;
+        const medium = analyzed.filter(p => p.label === 'Medium').length;
+        const strong = analyzed.filter(p => p.label === 'Strong' || p.label === 'Very Strong').length;
+        const avgScore = total ? Math.round(analyzed.reduce((sum, p) => sum + p.score, 0) / total) : 0;
+
+        return res.status(200).json({
+            success: true,
+            summary: { total, weak, medium, strong, avgScore },
+            data: analyzed,
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Internal server error." });
+    }
+};
+
 const getProfile = async (req, res) => { };
 const updateProfile = async (req, res) => { };
 
